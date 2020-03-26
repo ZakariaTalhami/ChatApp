@@ -63,8 +63,18 @@
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
     $(() => {
-        var socket = io();
+        // ask for a nickname
+        var nickname = prompt("choose a nickname: ", "nickname");
 
+        // Send the nickname as a querystr when creating the socket.
+        var socket = io('http://localhost:3000?nickname=' + nickname);
+
+        var color = "#000";
+        socket.on("set message color", (colorHex) => {
+            color = colorHex;
+            console.log("Got color of " + color);
+        });
+        
         // listen to when sending a message
         $("form").submit((e) => {
             e.preventDefault();
