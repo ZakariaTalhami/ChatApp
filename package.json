@@ -1,0 +1,18 @@
+{
+  "name": "socketio_getting_started",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "description": "Getting started exercise for Socket.io",
+  "author": {
+    "name": "Zakaria Talhami",
+    "email": "zakaria.a.a.talhami@gmail.com"
+  },
+  "dependencies": {
+    "express": "4.15.2",
+    "socket.io": "^2.3.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
