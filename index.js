@@ -13,6 +13,14 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
     console.log("A user connected");
 
+    // Broadcast when a new user enters the chat
+    // this broadcasts the message to every other
+    // socket except for this socket.
+    socket.broadcast.emit("chat message", "A new user has joined the chat. Say hello.");
+
+    // Emit to current socket that it entered the chat.
+    socket.emit("chat message", "You have joined the chat room.");
+
     // Listen to "chat message" even on this socket
     socket.on("chat message", (msg) => {
         console.log("Message: " + msg);
