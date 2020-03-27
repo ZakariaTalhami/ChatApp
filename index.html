@@ -36,6 +36,14 @@
             padding: 10px;
         }
 
+        form #tpyingIndicator {
+            background-color: white;
+            border-bottom: solid black 3px;
+            height: 24px;
+            padding: 4px;
+            display: none;
+        }
+
         #messages {
             list-style-type: none;
             margin: 0;
@@ -55,6 +63,7 @@
 <body>
     <ul id="messages"></ul>
     <form action="">
+        <div id="tpyingIndicator"></div>
         <input id="m" autocomplete="off" /><button>Send</button>
     </form>
 </body>
@@ -79,15 +88,45 @@
         $("form").submit((e) => {
             e.preventDefault();
             
-            // Emit the message through socket to the server.
-            // Emit "chat message" event
-            socket.emit("chat message", $("#m").val());
+            // Prevent empty strings from being sent
+            if($("#m").val().trim() != "") {
+                // Emit the message through socket to the server.
+                // Emit "chat message" event
+                socket.emit("chat message", $("#m").val());
 
-            // append the message directly
-            $("#messages").append($("<li style='color: " + color + "'>").text($("#m").val()));
-
-            $("#m").val("");
+                // append the message directly and clear input
+                $("#messages").append($("<li style='color: " + color + "'>").text($("#m").val()));
+                $("#m").val("");
+            }
             return false;
+        });
+
+        // listen when user is typing
+        var timer;
+        $("#m").keypress((e) => {
+            // Check for enter key presses
+            if(e.keyCode !== 13){
+                if (!timer) {                    
+                    // Send the server that the user is typing
+                    socket.emit("typing", true);
+                } else {
+                    clearTimeout(timer);
+                }
+
+                // Set timer
+                timer = setTimeout(() => {
+                    // Send the server that the user stopped typing
+                    socket.emit("typing", false);
+                    timer = null;
+                }, 1000); 
+            } else {
+                // If the key press is enter, the user stopped typing.
+                clearTimeout(timer);
+                timer = null;
+
+                // Send the server that the user stopped typing
+                socket.emit("typing", false);
+            }
         });
 
         // listen to "chat message" events from server
@@ -95,6 +134,33 @@
             // Append message to message list
             $("#messages").append($("<li style='color: " + msg.user.messageColor + "'>").text(msg.message));
         });
+
+        // Listen for when a user is typing
+        var typingUserStatus = {}
+        socket.on("typing", (isTyping, user) => {
+            console.log(`${user.nickname} is ${isTyping ? "typing" : "not typing"}`);
+            
+            // Update user typing status
+            typingUserStatus[user.nickname] = {
+                ...user,
+                isTyping: isTyping
+            }
+            updateTypingIndicator();
+        });
+
+
+        // Update the is typing indeicators
+        var updateTypingIndicator  = () => {
+            var typingUsers = Object.values(typingUserStatus).filter((user) => user.isTyping).map((user) => user.nickname);
+            if(typingUsers.length > 0) {
+                var text = `${typingUsers.join(", ")} ${typingUsers.length > 1 ? "are": "is"} typing.`
+                $("#tpyingIndicator").html(text);
+                $("#tpyingIndicator").show();
+            } else {
+                $("#tpyingIndicator").html("")
+                $("#tpyingIndicator").hide();
+            }
+        };
     });
 </script>
 

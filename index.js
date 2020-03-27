@@ -62,6 +62,11 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         console.log("A user has disconnected");
     });
+
+    // Listen for event of a user typing
+    socket.on("typing", (isTyping) => {
+        socket.broadcast.emit("typing", isTyping, userDatabase[socket.id]);
+    })
 });
 
 // start server by listening to port 3000
