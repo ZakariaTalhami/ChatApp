@@ -82,6 +82,10 @@
             // Emit the message through socket to the server.
             // Emit "chat message" event
             socket.emit("chat message", $("#m").val());
+
+            // append the message directly
+            $("#messages").append($("<li>").text($("#m").val()));
+
             $("#m").val("");
             return false;
         });
