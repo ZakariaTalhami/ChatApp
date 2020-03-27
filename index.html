@@ -84,7 +84,7 @@
             socket.emit("chat message", $("#m").val());
 
             // append the message directly
-            $("#messages").append($("<li>").text($("#m").val()));
+            $("#messages").append($("<li style='color: " + color + "'>").text($("#m").val()));
 
             $("#m").val("");
             return false;
@@ -93,7 +93,7 @@
         // listen to "chat message" events from server
         socket.on("chat message", (msg) => {
             // Append message to message list
-            $("#messages").append($("<li>").text(msg));
+            $("#messages").append($("<li style='color: " + msg.user.messageColor + "'>").text(msg.message));
         });
     });
 </script>

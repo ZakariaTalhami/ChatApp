@@ -4,11 +4,11 @@ var io = require("socket.io")(http);
 
 // Mock chat database
 var userDatabase = {
-    // "Socket ID": {
-    //     nickname: "",
-    //     messageColor: "",
-    //     messageCount: 0
-    // }
+    "server": {
+        nickname: "Server",
+        messageColor: "#f00",
+        messageCount: 0
+    }
 };
 
 // Load the index.html
@@ -39,17 +39,23 @@ io.on("connection", (socket) => {
     // Broadcast when a new user enters the chat
     // this broadcasts the message to every other
     // socket except for this socket.
-    socket.broadcast.emit("chat message", nickname + " has joined the chat. Say hello.");
+    socket.broadcast.emit("chat message", {
+        message: nickname + " has joined the chat. Say hello.",
+        user: userDatabase.server
+    });
 
 
     // Emit to current socket that it entered the chat.
-    socket.emit("chat message", "You have joined the chat room.");
+    socket.emit("chat message", {
+        message: "You have joined the chat room.",
+        user: userDatabase.server
+    });
 
     // Listen to "chat message" even on this socket
     socket.on("chat message", (msg) => {
         console.log(nickname + " : " + msg);
         // Emit the event to all connected sockets excluding current socket
-        socket.broadcast.emit("chat message", msg);
+        socket.broadcast.emit("chat message", {message: msg, user: userDatabase[socket.id]});
     })
 
     // Listen for the event of the socket getting disconnected
