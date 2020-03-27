@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
     socket.on("chat message", (msg) => {
         console.log(nickname + " : " + msg);
         // Emit the event to all connected sockets excluding current socket
-        socket.broadcast.emit("chat message", msg);:
+        socket.broadcast.emit("chat message", msg);
     })
 
     // Listen for the event of the socket getting disconnected
