@@ -73,7 +73,7 @@
 <script>
     $(() => {
         // ask for a nickname
-        var nickname = prompt("choose a nickname: ", "nickname");
+        var nickname = prompt("choose a nickname: ", "nickname").trim();
 
         // Send the nickname as a querystr when creating the socket.
         var socket = io('http://localhost:3000?nickname=' + nickname);
@@ -147,6 +147,10 @@
             }
             updateTypingIndicator();
         });
+
+        socket.on("online users", (users) => {
+            console.log(users);
+        })
 
 
         // Update the is typing indeicators
