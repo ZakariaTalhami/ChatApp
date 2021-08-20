@@ -1,20 +1,12 @@
-var app = require("express")();
-var http = require("http").createServer(app);
-var io = require("socket.io")(http);
+const express = require("express");
+const app = express();
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
+const path = require('path');
+const userService = require('./userService');
 
-// Mock chat database
-var userDatabase = {
-    "server": {
-        nickname: "Server",
-        messageColor: "#f00",
-        messageCount: 0
-    }
-};
-
-// Load the index.html
-app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
-});
+// Load static files
+app.use("/", express.static(path.join(__dirname, '../public')));
 
 // Listen to connection events
 // creates a socket object that can be used
@@ -25,15 +17,9 @@ io.on("connection", (socket) => {
     console.log(`${nickname} has connected`);
 
     // Set and send users message color
-    var messageColor = getRandomColor();
-    socket.emit("set message color", messageColor);
+    const user = userService.addUser(socket.id, {nickname});
 
-    // Add user to database
-    userDatabase[socket.id] = {
-        nickname: nickname,
-        messageColor: messageColor,
-        messageCount: 0
-    }
+    socket.emit("set message color", user.messageColor);
 
     // Broadcast the online user list
     broadcastOnlineUsers();
@@ -43,27 +29,33 @@ io.on("connection", (socket) => {
     // socket except for this socket.
     socket.broadcast.emit("chat message", {
         message: nickname + " has joined the chat. Say hello.",
-        user: userDatabase.server
+        user: userService.getServerUser()
     });
 
 
     // Emit to current socket that it entered the chat.
     socket.emit("chat message", {
         message: "You have joined the chat room.",
-        user: userDatabase.server
+        user: userService.getServerUser()
     });
 
     // Listen to "chat message" even on this socket
     socket.on("chat message", (msg) => {
         console.log(nickname + " : " + msg);
         // Emit the event to all connected sockets excluding current socket
-        socket.broadcast.emit("chat message", {message: msg, user: userDatabase[socket.id]});
+        socket.broadcast.emit("chat message", {
+          message: msg,
+          user: userService.getUserBySocketId(socket.id)
+        });
     })
 
     // Listen for the event of the socket getting disconnected
     socket.on("disconnect", () => {
-        console.log(`${userDatabase[socket.id].nickname} has disconnected`);
-        delete userDatabase[socket.id];
+        const user = userService.getUserBySocketId(socket.id);
+        console.log(`${user.nickname} has disconnected`);
+
+        // Remove user from the database
+        userService.deleteUser(socket.id);
 
         // Broadcast the online user list
         broadcastOnlineUsers();
@@ -71,7 +63,8 @@ io.on("connection", (socket) => {
 
     // Listen for event of a user typing
     socket.on("typing", (isTyping) => {
-        socket.broadcast.emit("typing", isTyping, userDatabase[socket.id]);
+        const user = userService.getUserBySocketId(socket.id);
+        socket.broadcast.emit("typing", isTyping, user);
     })
 });
 
@@ -83,17 +76,5 @@ http.listen(3000, () => {
 // Broadcast the online user list
 // Excluding the server 
 var broadcastOnlineUsers = () => {
-    io.emit("online users", Object.values(userDatabase).filter((user) => user.nickname !== "Server"));
+    io.emit("online users", userService.getAllUsers().filter((user) => user.nickname !== "Server"));
 };
-
-// Utils
-
-// Generate a random color
-function getRandomColor() {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
