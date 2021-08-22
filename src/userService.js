@@ -49,3 +49,4 @@ exports.getAllUsers = getAllUsers;
 exports.addUser = addUser;
 exports.getUserBySocketId = getUserBySocketId;
 exports.getServerUser = getServerUser;
+exports.deleteUser = deleteUser;
